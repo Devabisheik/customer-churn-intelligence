@@ -19,7 +19,7 @@ st.set_page_config(
 # TITLE
 # --------------------------------------------------
 
-st.title("🧠 Customer Churn Intelligence Platform")
+st.title("Customer Churn Intelligence Platform")
 
 st.sidebar.title("Navigation")
 
@@ -64,7 +64,7 @@ churn_model, kmeans_model, scaler = load_models()
 
 if page == "Dashboard":
 
-    st.header("📊 Dashboard")
+    st.header("Dashboard")
 
     st.write(
         "Welcome to the Customer Churn Intelligence Platform."
@@ -97,7 +97,7 @@ if page == "Dashboard":
 
 elif page == "Customer Prediction":
 
-    st.header("👤 Customer Churn & Segment Prediction")
+    st.header("Customer Churn & Segment Prediction")
 
     st.write(
         "Enter customer information to determine "
@@ -158,7 +158,7 @@ elif page == "Customer Prediction":
     # ----------------------------------------------
 
     if st.button(
-        "🔍 Analyze Customer",
+        "Analyze Customer",
         type="primary"
     ):
 
@@ -193,7 +193,7 @@ elif page == "Customer Prediction":
 
 elif page == "Segment Analysis":
 
-    st.header("🔎 Customer Segment Analysis")
+    st.header("Customer Segment Analysis")
 
     st.write(
         "Explore the characteristics and churn behavior "
@@ -272,7 +272,7 @@ elif page == "Segment Analysis":
     # CUSTOMER COUNT
     # -----------------------------------------
 
-    st.subheader("👥 Customers by Segment")
+    st.subheader("Customers by Segment")
 
     cluster_counts = (
         df["Cluster"]
@@ -286,7 +286,7 @@ elif page == "Segment Analysis":
     # CLUSTER PROFILE
     # -----------------------------------------
 
-    st.subheader("📊 Cluster Profiles")
+    st.subheader("Cluster Profiles")
 
     cluster_profile = (
         df.groupby("Cluster")[
@@ -305,7 +305,7 @@ elif page == "Segment Analysis":
     # CHURN BY CLUSTER
     # -----------------------------------------
 
-    st.subheader("📉 Churn Rate by Segment")
+    st.subheader("Churn Rate by Segment")
 
     churn_table = pd.crosstab(
         df["Cluster"],
@@ -334,7 +334,7 @@ elif page == "Segment Analysis":
     # SELECT SEGMENT
     # -----------------------------------------
 
-    st.subheader("🔍 Explore Individual Segment")
+    st.subheader("Explore Individual Segment")
 
     selected_cluster = st.selectbox(
         "Select a segment",
