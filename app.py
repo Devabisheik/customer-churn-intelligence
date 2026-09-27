@@ -193,8 +193,189 @@ elif page == "Customer Prediction":
 
 elif page == "Segment Analysis":
 
-    st.header("🔎 Segment Analysis")
+    st.header("🔎 Customer Segment Analysis")
 
-    st.info(
-        "Segment analysis will be added here."
+    st.write(
+        "Explore the characteristics and churn behavior "
+        "of each customer segment."
+    )
+
+    # Load dataset
+    df = pd.read_csv(
+        "data/Telco-Customer-Churn-data.csv"
+    )
+
+    # Make sure TotalCharges is numeric
+    df["TotalCharges"] = pd.to_numeric(
+        df["TotalCharges"],
+        errors="coerce"
+    )
+
+    # Create ServiceCount
+    service_columns = [
+        "PhoneService",
+        "MultipleLines",
+        "OnlineSecurity",
+        "OnlineBackup",
+        "DeviceProtection",
+        "TechSupport",
+        "StreamingTV",
+        "StreamingMovies"
+    ]
+
+    df["ServiceCount"] = (
+        df[service_columns]
+        .replace({
+            "Yes": 1,
+            "No": 0,
+            "No phone service": 0,
+            "No internet service": 0
+        })
+        .sum(axis=1)
+    )
+
+    # Features used by K-Means
+    segmentation_features = [
+        "tenure",
+        "MonthlyCharges",
+        "TotalCharges",
+        "SeniorCitizen",
+        "ServiceCount"
+    ]
+
+    # Scale the features
+    X_segment = df[segmentation_features]
+
+    X_segment_scaled = scaler.transform(
+        X_segment
+    )
+
+    # Predict clusters
+    df["Cluster"] = kmeans_model.predict(
+        X_segment_scaled
+    )
+
+    # -----------------------------------------
+    # CUSTOMER COUNT
+    # -----------------------------------------
+
+    st.subheader("👥 Customers by Segment")
+
+    cluster_counts = (
+        df["Cluster"]
+        .value_counts()
+        .sort_index()
+    )
+
+    st.bar_chart(cluster_counts)
+
+    # -----------------------------------------
+    # CLUSTER PROFILE
+    # -----------------------------------------
+
+    st.subheader("📊 Cluster Profiles")
+
+    cluster_profile = (
+        df.groupby("Cluster")[
+            segmentation_features
+        ]
+        .mean()
+        .round(2)
+    )
+
+    st.dataframe(
+        cluster_profile,
+        use_container_width=True
+    )
+
+    # -----------------------------------------
+    # CHURN BY CLUSTER
+    # -----------------------------------------
+
+    st.subheader("📉 Churn Rate by Segment")
+
+    churn_table = pd.crosstab(
+        df["Cluster"],
+        df["Churn"],
+        normalize="index"
+    ) * 100
+
+    churn_table = churn_table.round(2)
+
+    st.dataframe(
+        churn_table,
+        use_container_width=True
+    )
+
+    # -----------------------------------------
+    # CHURN CHART
+    # -----------------------------------------
+
+    if "Yes" in churn_table.columns:
+
+        st.bar_chart(
+            churn_table["Yes"]
+        )
+
+    # -----------------------------------------
+    # SEGMENT DETAILS
+    # -----------------------------------------
+
+    st.subheader("🔍 Segment Details")
+
+    selected_cluster = st.selectbox(
+        "Select a segment",
+        sorted(df["Cluster"].unique())
+    )
+
+    selected_data = df[
+        df["Cluster"] == selected_cluster
+    ]
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+
+        st.metric(
+            "Customers",
+            len(selected_data)
+        )
+
+    with col2:
+
+        st.metric(
+            "Avg Tenure",
+            f"{selected_data['tenure'].mean():.1f} months"
+        )
+
+    with col3:
+
+        st.metric(
+            "Avg Monthly Charges",
+            f"${selected_data['MonthlyCharges'].mean():.2f}"
+        )
+
+    with col4:
+
+        churn_rate = (
+            selected_data["Churn"]
+            .eq("Yes")
+            .mean() * 100
+        )
+
+        st.metric(
+            "Churn Rate",
+            f"{churn_rate:.2f}%"
+        )
+
+    st.write(
+        f"### Cluster {selected_cluster} Customers"
+    )
+
+    st.dataframe(
+        selected_data[
+            segmentation_features +
+            ["Churn"]
+        ].head(20),
+        use_container_width=True
     )
