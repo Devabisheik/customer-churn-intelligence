@@ -200,41 +200,46 @@ elif page == "Segment Analysis":
         "of each customer segment."
     )
 
-    # Load dataset
+    # -----------------------------------------
+    # LOAD DATASET
+    # -----------------------------------------
+
     df = pd.read_csv(
         "data/Telco-Customer-Churn-data.csv"
     )
 
-    # Make sure TotalCharges is numeric
+    # -----------------------------------------
+    # SAME PREPROCESSING AS NOTEBOOK
+    # -----------------------------------------
+
     df["TotalCharges"] = pd.to_numeric(
         df["TotalCharges"],
         errors="coerce"
     )
 
-    # Create ServiceCount
-    service_columns = [
-        "PhoneService",
-        "MultipleLines",
-        "OnlineSecurity",
-        "OnlineBackup",
-        "DeviceProtection",
-        "TechSupport",
-        "StreamingTV",
-        "StreamingMovies"
-    ]
+    # IMPORTANT:
+    # Same handling used in the notebook
+    df["TotalCharges"] = df["TotalCharges"].fillna(0)
+
+    # -----------------------------------------
+    # CREATE SERVICE COUNT
+    # -----------------------------------------
 
     df["ServiceCount"] = (
-        df[service_columns]
-        .replace({
-            "Yes": 1,
-            "No": 0,
-            "No phone service": 0,
-            "No internet service": 0
-        })
-        .sum(axis=1)
+        (df["PhoneService"] == "Yes").astype(int)
+        + (df["InternetService"] != "No").astype(int)
+        + (df["OnlineSecurity"] == "Yes").astype(int)
+        + (df["OnlineBackup"] == "Yes").astype(int)
+        + (df["DeviceProtection"] == "Yes").astype(int)
+        + (df["TechSupport"] == "Yes").astype(int)
+        + (df["StreamingTV"] == "Yes").astype(int)
+        + (df["StreamingMovies"] == "Yes").astype(int)
     )
 
-    # Features used by K-Means
+    # -----------------------------------------
+    # SEGMENTATION FEATURES
+    # -----------------------------------------
+
     segmentation_features = [
         "tenure",
         "MonthlyCharges",
@@ -243,14 +248,22 @@ elif page == "Segment Analysis":
         "ServiceCount"
     ]
 
-    # Scale the features
-    X_segment = df[segmentation_features]
+    X_segment = df[
+        segmentation_features
+    ].copy()
+
+    # -----------------------------------------
+    # SCALE
+    # -----------------------------------------
 
     X_segment_scaled = scaler.transform(
         X_segment
     )
 
-    # Predict clusters
+    # -----------------------------------------
+    # PREDICT CLUSTERS
+    # -----------------------------------------
+
     df["Cluster"] = kmeans_model.predict(
         X_segment_scaled
     )
@@ -318,10 +331,10 @@ elif page == "Segment Analysis":
         )
 
     # -----------------------------------------
-    # SEGMENT DETAILS
+    # SELECT SEGMENT
     # -----------------------------------------
 
-    st.subheader("🔍 Segment Details")
+    st.subheader("🔍 Explore Individual Segment")
 
     selected_cluster = st.selectbox(
         "Select a segment",
@@ -331,6 +344,10 @@ elif page == "Segment Analysis":
     selected_data = df[
         df["Cluster"] == selected_cluster
     ]
+
+    # -----------------------------------------
+    # SEGMENT METRICS
+    # -----------------------------------------
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -360,7 +377,8 @@ elif page == "Segment Analysis":
         churn_rate = (
             selected_data["Churn"]
             .eq("Yes")
-            .mean() * 100
+            .mean()
+            * 100
         )
 
         st.metric(
@@ -368,14 +386,17 @@ elif page == "Segment Analysis":
             f"{churn_rate:.2f}%"
         )
 
+    # -----------------------------------------
+    # CUSTOMERS IN SELECTED SEGMENT
+    # -----------------------------------------
+
     st.write(
         f"### Cluster {selected_cluster} Customers"
     )
 
     st.dataframe(
         selected_data[
-            segmentation_features +
-            ["Churn"]
+            segmentation_features + ["Churn"]
         ].head(20),
         use_container_width=True
     )
